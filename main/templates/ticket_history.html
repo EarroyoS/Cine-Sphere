@@ -1,0 +1,71 @@
+<!-- templates/tickets/history.html -->
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ticket_history.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="ticket-history-container">
+    <h1 class="ticket-history-title">Historial de Tickets</h1>
+    
+    {% if tickets %}
+    <div class="ticket-history-table-wrapper">
+        <table class="ticket-history-table">
+            <thead>
+                <tr>
+                    <th>Película</th>
+                    <th>Sala</th>
+                    <th>Fecha y Hora</th>
+                    <th>Asientos</th>
+                    <th>Precio</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in tickets %}
+                <tr>
+                    <td>{{ ticket.movie_title }}</td>
+                    <td>Sala {{ ticket.room_number }}</td>
+                    <td>{{ ticket.screening_date|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        <div class="ticket-history-seats">{{ ticket.seats }}</div>
+                        <div class="ticket-history-seat-count">({{ ticket.seat_count }} asientos)</div>
+                    </td>
+                    <td>
+                        <div class="ticket-history-price">${{ ticket.price }}</div>
+                        {% if ticket.discount_applied %}
+                        <span class="ticket-history-discount-badge">Descuento aplicado</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if ticket.can_cancel %}
+                        <form method="post" action="{% url 'cancel_ticket' ticket.ticket_id %}">
+                            {% csrf_token %}
+                            <button type="submit" 
+                                    class="ticket-history-cancel-btn"
+                                    onclick="return confirm('¿Estás seguro de que deseas cancelar este ticket? Esta acción no se puede deshacer.')">
+                                Cancelar
+                            </button>
+                        </form>
+                        {% else %}
+                        <span class="ticket-history-not-cancelable">No cancelable</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="ticket-history-empty">
+        <p class="ticket-history-empty-message">No tienes tickets comprados.</p>
+        <a href="{% url 'movie_list' %}" class="ticket-history-browse-movies-btn">
+            Ver películas disponibles
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="info-container">
+    <div class="movie-info-card">
+        <div class="movie-info-poster">
+            <img src="{{ movie.image.url }}" alt="{{ movie.title }}">
+        </div>
+        <div class="movie-info">
+            <h2 class="movie-title">{{ movie.title }}</h2>
+            <div class="movie-meta">
+                <span>Duración: {{ movie.duration }} min</span> | <span>Clasificación: {{ movie.classification }}</span>
+            </div>
+            <p class="movie-description">
+                {{ movie.description }}
+            </p>
+            <a class="buy-button" href="{% url 'selector_cine' movie.id %}">Comprar entradas</a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

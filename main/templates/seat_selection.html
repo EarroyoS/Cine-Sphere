@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="container-selection">
+    <div class="seat-selection">
+        <div class="screen">Pantalla</div>
+        <div class="seats" id="seatContainer">
+            <!-- Los asientos se generarán dinámicamente con JavaScript -->
+        </div>
+    </div>
+
+    <div class="cart">
+        <h2>Tu carrito</h2>
+        <div class="movie-info">
+            <img src="{{ movie.image.url }}" alt="{{ movie.title }}" class="movie-poster">
+            <div class="movie-details">
+                <h3>{{ movie.title }}</h3>
+                <span class="classification">{{ movie.classification }}</span>
+                Duración: {{ movie.duration }} min
+            </div>
+        </div>
+        <div class="cart-info">
+            <p><strong>Cine:</strong> {{ branch.name }}</p>
+            <p><strong>Fecha y hora:</strong> {{ screening.start_time }}</p>
+            <p><strong>Asientos seleccionados:</strong> <span id="selectedSeats"></span></p>
+        </div>
+        <div class="cart-total">
+            Total: $<span id="totalPrice">0.00</span>
+        </div>
+        <a id="selectTickets" class="btn btn-primary">Pagar</a>
+        <a href="{% url 'selector_cine' movie.id %}" class="btn btn-secondary">Volver</a>
+    </div>
+</div>
+
+<div id="paymentModal" class="modal">
+    <div class="modal-content form-container">
+        <span class="close" onclick="toggleModal(false)">&times;</span>
+        <h2 class="form-title">Pagar con Tarjeta</h2>
+        <form id="paymentForm" class="user-form">
+            <div class="form-group">
+                <label for="cardNumber" class="form-label">Número de Tarjeta</label>
+                <input type="text" id="cardNumber" class="form-input" placeholder="Número de tarjeta" required>
+            </div>
+            <div class="form-group">
+                <label for="cardholderName" class="form-label">Nombre del Propietario</label>
+                <input type="text" id="cardholderName" class="form-input" placeholder="Nombre del propietario" required>
+            </div>
+            <div class="form-group">
+                <label for="expirationDate" class="form-label">Fecha de Caducidad (MM/AA)</label>
+                <input type="text" id="expirationDate" class="form-input" placeholder="MM/AA" required>
+            </div>
+            <div class="form-group">
+                <label for="cvv" class="form-label">CVV</label>
+                <input type="password" id="cvv" class="form-input" placeholder="000" required>
+            </div>
+            <button type="submit" class="form-button">Confirmar Pago</button>
+        </form>
+    </div>
+</div>
+
+
+
+{{ seats_info|json_script:"seatsInfo" }}
+{{ screening.cost|json_script:"seatPrice" }}
+{{ screening.id|json_script:"screeningId" }}
+
+
+<script>
+    // Configuración
+    const screeningId = JSON.parse(document.getElementById('screeningId').textContent);
+
+    const seatsInfo = JSON.parse(document.getElementById('seatsInfo').textContent);
+    const seatPrice = parseFloat(JSON.parse(document.getElementById('seatPrice').textContent));
+
+    // Elementos del DOM
+    const seatContainer = document.getElementById('seatContainer');
+    const selectedSeatsElement = document.getElementById('selectedSeats');
+    const totalPriceElement = document.getElementById('totalPrice');
+    let selectedSeats = [];
+    
+
+    // Generar asientos
+    seatsInfo.forEach(({ number, is_occupied }) => {
+        const seatElement = document.createElement('div');
+        seatElement.className = `seat${is_occupied ? ' occupied' : ''}`;
+        seatElement.textContent = number;
+        if (!is_occupied) {
+            seatElement.addEventListener('click', () => toggleSeat(number, seatElement));
+        }
+        seatContainer.appendChild(seatElement);
+    });
+
+    // Función para seleccionar/deseleccionar asiento
+    function toggleSeat(seatNumber, element) {
+        element.classList.toggle('selected');
+        selectedSeats = element.classList.contains('selected') 
+            ? [...selectedSeats, seatNumber] 
+            : selectedSeats.filter(seat => seat !== seatNumber);
+        updateCart();
+    }
+
+    // Actualizar carrito
+    function updateCart() {
+        selectedSeatsElement.textContent = selectedSeats.join(', ');
+        totalPriceElement.textContent = (selectedSeats.length * seatPrice).toFixed(2);
+    }
+
+    const paymentModal = document.getElementById('paymentModal');
+    function toggleModal(open) {
+        paymentModal.style.display = open ? 'flex' : 'none';
+    }
+
+    // Cerrar el modal al hacer clic fuera de él
+    window.onclick = function(event) {
+        if (event.target == paymentModal) {
+            toggleModal(false);
+        }
+    }
+
+    // Manejar selección de boletos
+    document.getElementById('selectTickets').addEventListener('click', () => {
+        selectedSeats.length ? toggleModal(true) : alert('Por favor, selecciona al menos un asiento.');
+    });
+
+    // Procesar pago ficticio
+    document.getElementById('paymentForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        alert('Pago realizado con éxito: ' + selectedSeats.join(', '));
+        const totalPrice = (selectedSeats.length * seatPrice).toFixed(2);
+        submitTicketData(screeningId, selectedSeats, totalPrice);
+        toggleModal(false);
+    });
+
+// Enviar datos de tickets al backend
+function submitTicketData(screeningId, selectedSeats, totalPrice) {
+    // Obtener el token CSRF de la cookie
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Convertir los asientos a números si son strings
+    const seatNumbers = selectedSeats.map(seat => parseInt(seat));
+
+    // Preparar los datos
+    const ticketData = {
+        screening: screeningId,
+        seats: seatNumbers,
+        price: parseFloat(totalPrice)
+    };
+
+    console.log('Enviando datos:', ticketData);
+
+    // Realizar la solicitud POST
+    return fetch('/api/tickets/create/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(ticketData)
+    })
+    .then(response => {
+        console.log('Respuesta completa:', response);
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || 'Error en la creación del ticket');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Ticket creado exitosamente:', data);
+        return data;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        throw error;
+    });
+}
+
+</script>
+{% endblock %}

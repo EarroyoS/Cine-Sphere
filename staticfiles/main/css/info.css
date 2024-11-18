@@ -1,0 +1,78 @@
+.info-container {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f0f0f0;
+}
+
+.movie-info-card {
+    display: flex;
+    max-width: 800px;
+    background-color: white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+.movie-info-poster {
+    flex: 0 0 40%;
+    max-width: 300px;
+}
+.movie-info-poster img {
+    width: 100%;
+    height: auto;
+    display: block;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.movie-info {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+.movie-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #333;
+}
+.movie-meta {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 15px;
+}
+.movie-description {
+    font-size: 16px;
+    line-height: 1.5;
+    color: #444;
+    flex-grow: 1;
+}
+
+.buy-button {
+    align-self: flex-end;
+    background-color: #3B5998;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    text-decoration: none;
+}
+
+.buy-button:hover {
+    background-color: #4A6FA5;
+}
+
+@media (max-width: 600px) {
+    .movie-card {
+        flex-direction: column;
+    }
+    .movie-poster {
+        max-width: 100%;
+    }
+}

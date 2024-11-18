@@ -1,0 +1,227 @@
+{% load static %}
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cine sphere</title>
+    <link rel="stylesheet" href="{% static 'main/css/reset.css' %}">
+    <link rel="stylesheet" href="{% static 'main/css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'main/css/info.css' %}">
+    <link rel="stylesheet" href="{% static 'main/css/selector.css' %}">
+    <link rel="stylesheet" href="{% static 'main/css/forms.css' %}">
+    <link rel="stylesheet" href="{% static 'main/css/ticket_history.css' %}">
+</head>
+<body>
+    <div class="navbar-wrapper">
+        <a href="/" class="logo-container">
+            <img src="{% static 'main/img/designer_blanco.png' %}" alt="Logo" class="logo">
+        </a>
+        
+        <div class="buttons-container">
+            {% if user.is_authenticated %}
+                <div class="user-menu">
+                    <button class="button" onclick="toggleUserMenu()">{{ user.username }}</button>
+                    <div class="user-menu-content" id="userMenuContent">
+                        <a href="{% url 'update_user_info' %}">Modificar información</a>
+                        <a href="{% url 'ticket_history' %}">Ver historial</a>
+                        <a href="{% url 'logout' %}" onclick="handleLogout(event)">Cerrar sesión</a>
+                    </div>
+                </div>
+            {% else %}
+                <button class="button login-button" onclick="openLoginModal()">Iniciar sesión</button>
+                <button class="button register-button" onclick="openRegisterModal()">Registrarse</button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Modal de inicio de sesión -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content form-container">
+            <span class="close" onclick="closeLoginModal()">&times;</span>
+            <h2 class="form-title">Iniciar sesión</h2>
+            <form id="loginForm" onsubmit="handleLogin(event)" class="user-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="login-username" class="form-label">Usuario:</label>
+                    <input type="text" id="login-username" name="username" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password" class="form-label">Contraseña:</label>
+                    <input type="password" id="login-password" name="password" class="form-input" required>
+                </div>
+                <div class="form-error" id="loginError"></div>
+                <button type="submit" class="form-button">Iniciar sesión</button>
+            </form>
+        </div>
+    </div>    
+
+    <!-- Modal de registro -->
+    <div id="registerModal" class="modal">
+        <div class="modal-content form-container">
+            <span class="close" onclick="closeRegisterModal()">&times;</span>
+            <h2 class="form-title">Registrarse</h2>
+            <form id="registerForm" onsubmit="handleRegister(event)" class="user-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="register-username" class="form-label">Usuario:</label>
+                    <input type="text" id="register-username" name="username" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerFirstName" class="form-label">Nombre:</label>
+                    <input type="text" id="registerFirstName" name="first_name" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerLastName" class="form-label">Apellidos:</label>
+                    <input type="text" id="registerLastName" name="last_name" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-email" class="form-label">Email:</label>
+                    <input type="email" id="register-email" name="email" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-password1" class="form-label">Contraseña:</label>
+                    <input type="password" id="register-password1" name="password1" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-password2" class="form-label">Confirmar contraseña:</label>
+                    <input type="password" id="register-password2" name="password2" class="form-input" required>
+                </div>
+                <div class="form-error" id="registerError"></div>
+                <button type="submit" class="form-button">Registrarse</button>
+            </form>
+        </div>
+    </div>
+
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer>
+        <!-- Puedes agregar un pie de página aquí si lo deseas -->
+    </footer>
+
+    <script>
+        // Funciones para manejar los modales
+        function openLoginModal() {
+            document.getElementById('loginModal').style.display = 'block';
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').style.display = 'none';
+        }
+
+        function openRegisterModal() {
+            document.getElementById('registerModal').style.display = 'block';
+        }
+
+        function closeRegisterModal() {
+            document.getElementById('registerModal').style.display = 'none';
+        }
+
+        // Cerrar modales al hacer clic fuera de ellos
+        window.onclick = function(event) {
+            if (event.target.className === 'modal') {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // Manejar el menú de usuario
+        function toggleUserMenu() {
+            const menu = document.getElementById('userMenuContent');
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        }
+
+        // Cerrar el menú de usuario al hacer clic fuera
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('userMenuContent');
+            const button = event.target.closest('.user-menu button');
+            if (!button && menu.style.display === 'block') {
+                menu.style.display = 'none';
+            }
+        });
+
+        // Manejar inicio de sesión
+        async function handleLogin(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch('{% url "login" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                    }
+                });
+
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    const data = await response.json();
+                    document.getElementById('loginError').textContent = 
+                        data.error || 'Error al iniciar sesión. Por favor, intente nuevamente.';
+                }
+            } catch (error) {
+                document.getElementById('loginError').textContent = 
+                    'Error de conexión. Por favor, intente nuevamente.';
+            }
+        }
+
+        // Manejar registro
+        async function handleRegister(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+
+            if (formData.get('password1') !== formData.get('password2')) {
+                document.getElementById('registerError').textContent = 'Las contraseñas no coinciden';
+                return;
+            }
+
+            try {
+                const response = await fetch('{% url "register" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                    }
+                });
+
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    const data = await response.json();
+                    document.getElementById('registerError').textContent = 
+                        data.error || 'Error al registrarse. Por favor, intente nuevamente.';
+                }
+            } catch (error) {
+                document.getElementById('registerError').textContent = 
+                    'Error de conexión. Por favor, intente nuevamente.';
+            }
+        }
+
+        // Manejar cierre de sesión
+        async function handleLogout(event) {
+            event.preventDefault();
+            
+            try {
+                const response = await fetch('{% url "logout" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                });
+
+                if (response.ok) {
+                    window.location.reload();
+                }
+            } catch (error) {
+                console.error('Error al cerrar sesión:', error);
+            }
+        }
+    </script>
+</body>

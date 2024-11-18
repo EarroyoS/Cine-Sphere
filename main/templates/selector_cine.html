@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container-selection">
+    <div class="section booking-section">
+        <h1>Selecciona tu cine</h1>
+        
+        <select id="branch-selector">
+            <option value="">Elige una sucursal</option>
+            {% for branch in branches %}
+            <option value="{{ branch.id }}">{{ branch.name }}</option>
+            {% endfor %}
+        </select>
+
+        <h2>Horarios</h2>
+        <div id="showtimes" class="showtimes">
+            <!-- Los horarios se cargarán aquí dinámicamente -->
+        </div>
+    </div>
+
+    <div class="cart">
+        <h2>Tu carrito</h2>
+        <div class="movie-info">
+            <img src="{{ movie.image.url }}" alt="{{ movie.title }}" class="movie-poster">
+            <div class="movie-details">
+                <h3>{{ movie.title }}</h3>
+                <p><span class="classification">{{ movie.classification }}</span> Duración: {{ movie.duration }} min</p>
+            </div>
+        </div>
+        <div class="cart-info">
+            <p><strong>Cine:</strong> </p>
+            <p><strong>Fecha y hora:</strong> </p>
+            <p><strong>Asientos ():</strong> </p>
+        </div>
+        <div class="cart-total">
+            Total: $0.00
+        </div>
+        <a href="/"class="btn btn-secondary">Volver</a>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const branchSelector = document.getElementById('branch-selector');
+        const showtimesContainer = document.getElementById('showtimes');
+        const movieId = '{{ movie.id }}';
+        const baseSeatSelectionUrl = "{% url 'seat_selection' movie.id 0 0 %}".replace('/0/0/', '/');
+
+        const formatDate = dateString => {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric' };
+            return new Date(dateString).toLocaleDateString('es-ES', options);
+        };
+
+        const createShowtimeHtml = (branchId, screenings) => {
+            if (!screenings.length) return '<p>No hay horarios disponibles para esta sucursal.</p>';
+
+            return screenings.map(({ id, start_time }) => `
+                <a href="${baseSeatSelectionUrl}${branchId}/${id}" class="showtime" data-screening-id="${id}">
+                    ${formatDate(start_time)}
+                </a>
+            `).join('');
+        };
+
+        const fetchScreenings = async (branchId) => {
+            try {
+                const response = await fetch(`{% url 'get_movie_screenings' %}?movie_id=${movieId}&branch_id=${branchId}`);
+                const { screenings } = await response.json();
+                showtimesContainer.innerHTML = createShowtimeHtml(branchId, screenings);
+            } catch (error) {
+                console.error('Error fetching screenings:', error);
+                showtimesContainer.innerHTML = '<p>Error al cargar los horarios. Por favor, intenta de nuevo.</p>';
+            }
+        };
+
+        branchSelector.addEventListener('change', (e) => {
+            const branchId = e.target.value;
+            branchId ? fetchScreenings(branchId) : showtimesContainer.innerHTML = '';
+        });
+    });
+</script>
+{% endblock %}

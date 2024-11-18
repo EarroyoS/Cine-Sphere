@@ -1,0 +1,209 @@
+.navbar-wrapper {
+    background-color: #203d95;
+    padding: 20px 0;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.logo-container {
+    flex: 1;
+}
+
+.logo {
+    height: 60px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.logo:hover {
+    transform: scale(1.1);
+}
+
+.buttons-container {
+    display: flex;
+    gap: 10px;
+}
+
+.button {
+    background-color: #073a8c;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.login-button, .register-button {
+    background-color: #0A2472;
+}
+
+.login-button:hover, .register-button:hover {
+    background-color: #073a8c;
+}
+
+.user-menu {
+    position: relative;
+}
+
+.user-menu-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: white;
+    min-width: 200px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    z-index: 1000;
+    border-radius: 5px;
+}
+
+.user-menu-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+.user-menu-content a:hover {
+    background-color: #f1f1f1;
+}
+
+.error-message {
+    color: red;
+    margin-top: 10px;
+}
+
+.navbar-wrapper {
+    background-color: #0A2472;
+    padding: 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo-container {
+    flex: 1;
+}
+
+.buttons-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.user-menu {
+    position: relative;
+}
+
+.user-button {
+    background: none;
+    border: none;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.user-menu-content {
+    display: none; /* Oculto por defecto */
+    position: absolute;
+    right: 0;
+    top: 100%; /* Aparece justo debajo del botón */
+    background-color: white;
+    min-width: 200px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    z-index: 1000;
+    border-radius: 5px;
+}
+
+.user-menu-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+.user-menu-content a:hover {
+    background-color: #f1f1f1;
+}
+/* Contenedor de la lista de películas */
+.movie-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+    padding: 20px;
+}
+
+/* Diseño de la tarjeta de película */
+.movie-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    width: 100%;
+    max-width: 200px;
+    text-align: center;
+    transition: transform 0.3s ease;
+    font-family: Verdana, sans-serif; /* Fuente Verdana */
+}
+
+/* Efecto hover para la tarjeta */
+.movie-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Imagen de la tarjeta */
+.movie-card img {
+    width: 100%;
+    height: auto;
+    border-bottom: 2px solid #ddd;
+}
+
+/* Título de la película */
+.movie-card p {
+    font-size: 1rem;
+    font-weight: bold;
+    margin: 10px 0;
+    color: #333;
+    text-decoration: none; 
+}
+
+/* Botón de detalles */
+.button.view-details {
+    display: inline-block;
+    margin: 10px;
+    padding: 8px 16px;
+    background-color: #073a8c; /* Color solicitado */
+    color: #fff;
+    border-radius: 5px;
+    text-decoration: none; /* Sin subrayado en el botón */
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+}
+
+.button.view-details:hover {
+    background-color: #3B5998; /* Color ligeramente más oscuro en hover */
+}
+
+/* Diseño responsive */
+@media (min-width: 600px) {
+    .movie-card {
+        flex: 1 1 calc(50% - 16px);
+    }
+}
+
+@media (min-width: 900px) {
+    .movie-card {
+        flex: 1 1 calc(25% - 16px);
+    }
+}

@@ -1,0 +1,78 @@
+<!-- login.html -->
+{% extends 'base.html' %}
+{% block content %}
+<div class="login-form">
+    <h2>Iniciar Sesión</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="email">Correo electrónico:</label>
+            <input type="email" id="email" name="email" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Contraseña:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit">Iniciar Sesión</button>
+    </form>
+</div>
+{% endblock %}
+
+<!-- register.html -->
+{% extends 'base.html' %}
+{% block content %}
+<div class="register-form">
+    <h2>Registro</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="username">Nombre de usuario:</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        <div class="form-group">
+            <label for="email">Correo electrónico:</label>
+            <input type="email" id="email" name="email" required>
+        </div>
+        <div class="form-group">
+            <label for="first_name">Nombre:</label>
+            <input type="text" id="first_name" name="first_name" required>
+        </div>
+        <div class="form-group">
+            <label for="last_name">Apellidos:</label>
+            <input type="text" id="last_name" name="last_name" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Contraseña:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit">Registrarse</button>
+    </form>
+</div>
+{% endblock %}
+
+<!-- base.html actualizado -->
+{% load static %}
+<div class="navbar-wrapper">
+    <a href="/" class="logo-container">
+        <img src="{% static 'main/img/designer_blanco.png' %}" alt="Logo" class="logo">
+    </a>
+    <div class="buttons-container">
+        {% if user.is_authenticated %}
+            <div class="dropdown">
+                <button class="button options-button">Opciones</button>
+                <div class="dropdown-content">
+                    <a href="#">Modificar datos</a>
+                    <a href="#">Cancelar pedido</a>
+                    <a href="{% url 'logout' %}">Cerrar sesión</a>
+                </div>
+            </div>
+        {% else %}
+            <a href="{% url 'login' %}" class="button login-button">Iniciar sesión</a>
+            <a href="{% url 'register' %}" class="button register-button">Registrarse</a>
+        {% endif %}
+    </div>
+</div>
+
+<div role="main">
+    {% block content %}{% endblock %}
+</div>

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="movie-list">
+    {% for movie in movies %}
+    <div class="movie-card">
+        <a href="{% url 'selector_cine' movie.id %}">
+            <img src="{{ movie.image.url }}" alt="{{ movie.title }}">
+            <p>{{ movie.title }}</p>
+        </a>
+        <a href="{% url 'movie_info' movie.id %}" class="button view-details">Detalles</a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
