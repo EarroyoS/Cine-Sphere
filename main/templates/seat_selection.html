@@ -125,10 +125,42 @@
     // Procesar pago ficticio
     document.getElementById('paymentForm').addEventListener('submit', function(event) {
         event.preventDefault();
+        const cardNumber = document.getElementById('cardNumber').value;
+        const cardholderName = document.getElementById('cardholderName').value;
+        const expirationDate = document.getElementById('expirationDate').value;
+        const cvv = document.getElementById('cvv').value;
+
+        // Validar Número de Tarjeta (Solo dígitos, longitud mínima de 12 y máxima de 19)
+        const cardNumberRegex = /^\d{12,19}$/;
+        if (!cardNumberRegex.test(cardNumber)) {
+            alert('Número de tarjeta inválido');
+            return;
+        }
+
+        // Validar Nombre del Propietario (No vacío)
+        if (cardholderName.trim() === '') {
+            alert('El nombre del propietario no puede estar vacío');
+            return;
+        }
+
+        // Validar Fecha de Caducidad (Formato MM/AA)
+        const expirationDateRegex = /^(0[1-9]|1[0-2])\/\d{2}$/;
+        if (!expirationDateRegex.test(expirationDate)) {
+            alert('Fecha de caducidad inválida');
+            return;
+        }
+
+        // Validar CVV (Solo dígitos, longitud de 3 a 4)
+        const cvvRegex = /^\d{3,4}$/;
+        if (!cvvRegex.test(cvv)) {
+            alert('CVV inválido');
+            return;
+        }
         alert('Pago realizado con éxito: ' + selectedSeats.join(', '));
         const totalPrice = (selectedSeats.length * seatPrice).toFixed(2);
         submitTicketData(screeningId, selectedSeats, totalPrice);
         toggleModal(false);
+        setTimeout(() => { window.location.href = '/';  }, 500);
     });
 
 // Enviar datos de tickets al backend
@@ -149,20 +181,14 @@ function submitTicketData(screeningId, selectedSeats, totalPrice) {
         return cookieValue;
     }
 
-    // Convertir los asientos a números si son strings
     const seatNumbers = selectedSeats.map(seat => parseInt(seat));
-
-    // Preparar los datos
     const ticketData = {
         screening: screeningId,
         seats: seatNumbers,
         price: parseFloat(totalPrice)
     };
 
-    console.log('Enviando datos:', ticketData);
-
-    // Realizar la solicitud POST
-    return fetch('/api/tickets/create/', {
+    fetch('/api/tickets/create/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -171,21 +197,23 @@ function submitTicketData(screeningId, selectedSeats, totalPrice) {
         body: JSON.stringify(ticketData)
     })
     .then(response => {
-        console.log('Respuesta completa:', response);
         if (!response.ok) {
-            return response.json().then(data => {
-                throw new Error(data.error || 'Error en la creación del ticket');
-            });
+            throw new Error('Error en la creación del ticket');
         }
-        return response.json();
+        return response.blob(); // Descargar el archivo como blob
     })
-    .then(data => {
-        console.log('Ticket creado exitosamente:', data);
-        return data;
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ticket.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
     })
     .catch(error => {
         console.error('Error:', error);
-        throw error;
+        alert('No se pudo crear el ticket.');
     });
 }
 

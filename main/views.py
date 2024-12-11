@@ -1,23 +1,16 @@
 import logging
 import json
 
-from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse, HttpResponseServerError
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import JsonResponse, HttpResponseServerError, HttpResponse
 from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_http_methods
 from django.views.decorators.csrf import ensure_csrf_cookie
-from django.core.exceptions import ObjectDoesNotExist
-from django.contrib.auth import login, logout
-from django.contrib.auth.forms import UserCreationForm
-from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
-from django.contrib.auth import authenticate
-from django.http import JsonResponse
+from django.contrib.auth import login, logout, authenticate
 from .forms import CustomUserCreationForm, UserUpdateForm
-from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Count, Prefetch
+from django.db.models import Prefetch
 
 
 from django.middleware.csrf import get_token
@@ -108,6 +101,14 @@ def get_movie_screenings(request):
     
     return JsonResponse({'screenings': screening_data})
 
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Image
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.units import inch
+import io
+import qrcode
+import tempfile
+
 @ensure_csrf_cookie
 @require_POST
 def create_ticket(request):
@@ -169,19 +170,65 @@ def create_ticket(request):
         # Agregar los asientos al ticket
         ticket.add_seats(seat_numbers)
 
-        return JsonResponse({
-            'ticket_id': ticket.id,
-            'message': 'Ticket creado exitosamente'
-        }, status=201)
-        
-    except Screening.DoesNotExist:
-        return JsonResponse({'error': 'La proyección no existe'}, status=404)
-    except json.JSONDecodeError:
-        return JsonResponse({'error': 'JSON inválido en la solicitud'}, status=400)
-    except Exception as e:
-        logger.error(f"Error creating ticket: {str(e)}", exc_info=True)
-        return JsonResponse({'error': f'Error interno del servidor: {str(e)}'}, status=500)
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        elements = []
 
+        # Generar el QR
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(f"{ticket.id}")
+        qr.make(fit=True)
+        qr_img = qr.make_image(fill_color="black", back_color="white")
+
+        # Guardar la imagen del QR en un archivo temporal
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as temp_file:
+            qr_img.save(temp_file, format="PNG")
+            temp_file_path = temp_file.name
+
+        # Crear la tabla con los datos del ticket
+        data = [
+            ["Campo", "Información"],
+            ["Película", screening.movie.title],
+            ["Fecha y Hora", screening.start_time.strftime('%Y-%m-%d %H:%M:%S')],
+            ["Sala", screening.room.number],
+            ["Asiento(s)", ', '.join(map(str, seat_numbers))],
+            ["Precio Total", f"${price:.2f}"]
+        ]
+        table = Table(data, colWidths=[2.5 * inch, 3.5 * inch])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ]))
+
+        elements.append(table)
+
+        # Agregar el QR al PDF
+        qr_image = Image(temp_file_path)
+        qr_image.drawHeight = 1.5 * inch  # Ajusta el tamaño del QR
+        qr_image.drawWidth = 1.5 * inch
+        elements.append(qr_image)
+
+        # Construir el PDF
+        doc.build(elements)
+
+        buffer.seek(0)
+        response = HttpResponse(buffer, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="ticket_{ticket.id}.pdf"'
+        return response
+
+    except Exception as e:
+        logger.error(f"Error creando ticket: {str(e)}")
+        return JsonResponse({'error': 'Error interno del servidor'}, status=500)
+    
 @require_http_methods(["POST"])
 def login_view(request):
     username = request.POST.get('username')
